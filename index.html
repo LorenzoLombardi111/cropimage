@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Image Cropper Online — Crop for Instagram, Social Media | freecropimage.app</title>
+<meta name="description" content="Crop images free in your browser. Presets for Instagram, Facebook, YouTube. No upload, no login, no watermarks. freecropimage.app">
+<link rel="canonical" href="https://freecropimage.app/">
+<meta property="og:title" content="Free Image Cropper Online | freecropimage.app">
+<meta property="og:description" content="Crop images free in your browser. No upload, no login, no watermarks.">
+<meta property="og:image" content="https://freecropimage.app/og-image.svg">
+<meta property="og:url" content="https://freecropimage.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Free Image Cropper Online | freecropimage.app">
+<meta name="twitter:description" content="Crop images free in your browser. No upload, no login, no watermarks.">
+<meta name="twitter:image" content="https://freecropimage.app/og-image.svg">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #faf9f6;
+  --surface: #f4f2ee;
+  --border: #e8e4dd;
+  --text-primary: #1a1917;
+  --text-secondary: #6b6760;
+  --text-muted: #9e9b96;
+  --accent: #C49A2A;
+  --accent-hover: #A8831F;
+  --accent-text: #ffffff;
+  --destructive: #c0392b;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --success: #27ae60;
+}
+
+[data-theme="dark"] {
+  --bg: #141412;
+  --surface: #1e1c1a;
+  --border: #2e2b27;
+  --text-primary: #f0ede8;
+  --text-secondary: #9e9b96;
+  --text-muted: #6b6760;
+  --accent: #D4A835;
+  --accent-hover: #C49A2A;
+  --accent-text: #ffffff;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+  --success: #2ecc71;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Lora', serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* Header */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.header-brand {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+#btn-new-image { display: none; }
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+.theme-toggle:hover { border-color: var(--accent); }
+
+/* Main area */
+.main {
+  margin-top: 52px;
+  height: calc(100vh - 52px - 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Drop zone */
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 560px;
+  padding: 64px 32px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(196, 154, 42, 0.04);
+}
+[data-theme="dark"] .drop-zone:hover,
+[data-theme="dark"] .drop-zone.drag-over {
+  background: rgba(212, 168, 53, 0.06);
+}
+
+.drop-zone-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 20px;
+  color: var(--text-muted);
+}
+
+.drop-zone-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.drop-zone-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.file-input { display: none; }
+
+/* Status bar */
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  z-index: 100;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.status-left { display: flex; align-items: center; gap: 4px; }
+.status-right { display: flex; align-items: center; gap: 4px; }
+
+/* Badge */
+.badge {
+  position: fixed;
+  bottom: 40px;
+  right: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text-muted);
+  z-index: 90;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.badge:hover { color: var(--accent); }
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--text-primary);
+  color: var(--bg);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: toastIn 0.2s ease forwards;
+  pointer-events: auto;
+}
+.toast.out { animation: toastOut 0.2s ease forwards; }
+@keyframes toastIn { to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(-10px); } }
+
+@media (max-width: 768px) {
+  .drop-zone {
+    max-width: 90%;
+    padding: 48px 24px;
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a href="/" class="header-brand">freecropimage.app</a>
+  <div class="header-actions">
+    <button id="btn-new-image" class="btn btn-secondary">New Image</button>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">☀️</button>
+  </div>
+</header>
+
+<main class="main" id="main-area">
+  <div class="drop-zone" id="drop-zone">
+    <svg class="drop-zone-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="8" y="8" width="48" height="48" rx="4"/>
+      <path d="M8 44 l14-14 8 8 12-12 14 14"/>
+      <circle cx="24" cy="24" r="5"/>
+      <path d="M32 4 v-0" stroke="none"/>
+      <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-dasharray="3 3" transform="translate(21, 21) scale(0.5)"/>
+    </svg>
+    <div class="drop-zone-text">Drop an image here or click to browse</div>
+    <div class="drop-zone-sub">JPG, PNG, WebP, GIF, BMP — crop for free, no upload</div>
+    <input type="file" class="file-input" id="file-input" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml">
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<a href="https://freesuite.app" target="_blank" rel="noopener" class="badge">by freesuite.app</a>
+
+<footer class="status-bar">
+  <div class="status-left" id="status-left">Ready</div>
+  <div class="status-right">All processing happens in your browser — nothing uploaded</div>
+</footer>
+
+<script>
+// Theme
+(function() {
+  const toggle = document.getElementById('theme-toggle');
+  const saved = localStorage.getItem('suite_theme');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    toggle.textContent = '🌙';
+  }
+  toggle.addEventListener('click', function() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('suite_theme', 'light');
+      toggle.textContent = '☀️';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('suite_theme', 'dark');
+      toggle.textContent = '🌙';
+    }
+  });
+})();
+
+// Toast
+function showToast(msg, duration) {
+  duration = duration || 3000;
+  var container = document.getElementById('toast-container');
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(function() {
+    el.classList.add('out');
+    setTimeout(function() { el.remove(); }, 200);
+  }, duration);
+}
+
+// Drop zone
+(function() {
+  var zone = document.getElementById('drop-zone');
+  var input = document.getElementById('file-input');
+
+  zone.addEventListener('click', function() { input.click(); });
+
+  zone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+  zone.addEventListener('dragleave', function() {
+    zone.classList.remove('drag-over');
+  });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    var files = e.dataTransfer.files;
+    if (files.length > 0) handleFile(files[0]);
+  });
+
+  input.addEventListener('change', function() {
+    if (input.files.length > 0) handleFile(input.files[0]);
+    input.value = '';
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('Only image files are supported.');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      showToast('File is too large. Maximum size is 50MB.');
+      return;
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      showToast('Large image — may be slow to process', 4000);
+    }
+    // Image loaded — will be handled in next phase
+    showToast('Image loaded! Editor coming soon.');
+  }
+})();
+</script>
+
+</body>
+</html>

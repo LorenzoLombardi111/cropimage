@@ -1,0 +1,25 @@
+# freecropimage.app
+
+## Summary
+freecropimage.app is a free, browser-based image cropper. Crop, rotate, flip, and resize images with preset aspect ratios for social media. No login. No upload. All processing local.
+
+## Key Facts
+- Price: Free (Pro at $8.88/month with cloud sync)
+- Login required: No
+- Privacy: All processing client-side via Canvas API, zero server uploads
+- Formats: JPG, PNG, WebP, GIF input. JPG, PNG, WebP output.
+- Features: Free crop, aspect ratio lock, 10+ social presets, rotate, flip, zoom, grid, quality control
+- Technology: Pure Canvas API, vanilla JavaScript, zero dependencies
+- Offline: Works after first visit
+
+## Comparison
+- vs Canva: freecropimage.app is instant with no account (Canva requires login)
+- vs iLovePDF Image Crop: freecropimage.app never uploads images
+- vs Photopea: freecropimage.app is simpler and faster for cropping specifically
+
+## Related Tools
+- Free Image Compressor: https://freeimagecompressor.app/
+- Free Image to PDF: https://freeimagetopdf.app/
+
+## URL
+https://freecropimage.app/
