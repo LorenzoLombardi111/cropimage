@@ -15,6 +15,7 @@
 <meta name="twitter:title" content="Free Image Cropper Online | freecropimage.app">
 <meta name="twitter:description" content="Crop images free in your browser. No upload, no login, no watermarks.">
 <meta name="twitter:image" content="https://freecropimage.app/og-image.svg">
+<meta name="theme-color" content="#faf9f6">
 <link rel="manifest" href="/manifest.json">
 <script type="application/ld+json">
 [
@@ -887,8 +888,8 @@ html, body {
     <div class="editor-body">
       <div class="canvas-area" id="canvas-area">
         <div class="canvas-wrapper" id="canvas-wrapper">
-          <canvas id="image-canvas"></canvas>
-          <canvas id="overlay-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
+          <canvas id="image-canvas" role="img" aria-label="Loaded image"></canvas>
+          <canvas id="overlay-canvas" role="img" aria-label="Crop area — drag to adjust" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
         </div>
         <div class="zoom-indicator" id="zoom-indicator">100%</div>
       </div>
@@ -899,7 +900,7 @@ html, body {
         </div>
         <div class="sidebar-section">
           <div class="sidebar-label">ASPECT RATIO</div>
-          <select id="aspect-select">
+          <select id="aspect-select" aria-label="Aspect ratio">
             <option value="free">Free</option>
             <option value="1">1:1 (Square)</option>
             <option value="1.3333">4:3</option>
@@ -914,23 +915,23 @@ html, body {
         <div class="sidebar-section">
           <div class="sidebar-label">PRESETS</div>
           <div class="preset-grid" id="preset-grid">
-            <button class="preset-btn" data-ratio="1" data-name="ig-post">Instagram Post</button>
-            <button class="preset-btn" data-ratio="0.5625" data-name="ig-story">Instagram Story</button>
-            <button class="preset-btn" data-ratio="2.6282" data-name="fb-cover">Facebook Cover</button>
-            <button class="preset-btn" data-ratio="3" data-name="tw-header">Twitter Header</button>
-            <button class="preset-btn" data-ratio="1.7778" data-name="yt-thumb">YouTube Thumb</button>
-            <button class="preset-btn" data-ratio="4" data-name="li-banner">LinkedIn Banner</button>
-            <button class="preset-btn" data-ratio="1" data-name="passport">Passport Photo</button>
-            <button class="preset-btn" data-ratio="1.7778" data-name="wallpaper">Wallpaper 1080p</button>
+            <button class="preset-btn" data-ratio="1" data-name="ig-post" aria-label="Instagram Post 1:1">Instagram Post</button>
+            <button class="preset-btn" data-ratio="0.5625" data-name="ig-story" aria-label="Instagram Story 9:16">Instagram Story</button>
+            <button class="preset-btn" data-ratio="2.6282" data-name="fb-cover" aria-label="Facebook Cover 820:312">Facebook Cover</button>
+            <button class="preset-btn" data-ratio="3" data-name="tw-header" aria-label="Twitter Header 1500:500">Twitter Header</button>
+            <button class="preset-btn" data-ratio="1.7778" data-name="yt-thumb" aria-label="YouTube Thumbnail 16:9">YouTube Thumb</button>
+            <button class="preset-btn" data-ratio="4" data-name="li-banner" aria-label="LinkedIn Banner 1584:396">LinkedIn Banner</button>
+            <button class="preset-btn" data-ratio="1" data-name="passport" aria-label="Passport Photo 1:1">Passport Photo</button>
+            <button class="preset-btn" data-ratio="1.7778" data-name="wallpaper" aria-label="Wallpaper 1080p 16:9">Wallpaper 1080p</button>
           </div>
         </div>
         <div class="sidebar-section">
           <div class="sidebar-label">TRANSFORM</div>
           <div class="transform-row">
-            <button class="transform-btn" id="btn-rotate-left" title="Rotate Left">&#8634;</button>
-            <button class="transform-btn" id="btn-rotate-right" title="Rotate Right">&#8635;</button>
-            <button class="transform-btn" id="btn-flip-h" title="Flip Horizontal">&#8596;</button>
-            <button class="transform-btn" id="btn-flip-v" title="Flip Vertical">&#8597;</button>
+            <button class="transform-btn" id="btn-rotate-left" title="Rotate Left" aria-label="Rotate counterclockwise">&#8634;</button>
+            <button class="transform-btn" id="btn-rotate-right" title="Rotate Right" aria-label="Rotate clockwise">&#8635;</button>
+            <button class="transform-btn" id="btn-flip-h" title="Flip Horizontal" aria-label="Flip horizontal">&#8596;</button>
+            <button class="transform-btn" id="btn-flip-v" title="Flip Vertical" aria-label="Flip vertical">&#8597;</button>
           </div>
         </div>
         <div class="sidebar-section">
@@ -941,20 +942,20 @@ html, body {
         <div class="sidebar-section">
           <div class="sidebar-label">ZOOM</div>
           <div class="zoom-row">
-            <input type="range" id="zoom-slider" min="50" max="300" value="100" step="5">
+            <input type="range" id="zoom-slider" min="50" max="300" value="100" step="5" aria-label="Zoom level">
             <span class="zoom-label" id="zoom-label">Fit</span>
           </div>
           <button class="zoom-fit-btn" id="zoom-fit-btn">Fit to screen</button>
         </div>
         <div class="sidebar-section">
           <div class="sidebar-label">OUTPUT</div>
-          <div class="format-toggles" id="format-toggles">
+          <div class="format-toggles" id="format-toggles" role="group" aria-label="Output format">
             <button class="format-btn active" data-format="jpg">JPG</button>
             <button class="format-btn" data-format="png">PNG</button>
             <button class="format-btn" data-format="webp">WebP</button>
           </div>
           <div class="quality-row">
-            <input type="range" id="quality-slider" min="50" max="100" value="85" step="1">
+            <input type="range" id="quality-slider" min="50" max="100" value="85" step="1" aria-label="Output quality">
             <span class="quality-label" id="quality-label">Quality: 85%</span>
           </div>
           <div class="est-size" id="est-size">~0 KB</div>
@@ -1133,13 +1134,13 @@ function drawImageToCanvas() {
   var dw = Math.round(natW * displayScale);
   var dh = Math.round(natH * displayScale);
 
-  // Rescale crop rect if canvas size changed
+  // Rescale crop rect if canvas size changed (no rounding to avoid drift)
   if (oldScale > 0 && oldScale !== displayScale && cropRect.width > 0) {
     var ratio = displayScale / oldScale;
-    cropRect.x = Math.round(cropRect.x * ratio);
-    cropRect.y = Math.round(cropRect.y * ratio);
-    cropRect.width = Math.round(cropRect.width * ratio);
-    cropRect.height = Math.round(cropRect.height * ratio);
+    cropRect.x = cropRect.x * ratio;
+    cropRect.y = cropRect.y * ratio;
+    cropRect.width = cropRect.width * ratio;
+    cropRect.height = cropRect.height * ratio;
   }
 
   imageCanvas.width = dw;
@@ -1342,12 +1343,14 @@ function getPos(e) {
 
 // ── Estimate output file size ──
 function estimateOutputSize() {
-  if (!originalImage || cropRect.width <= 0) {
+  if (!originalImage || cropRect.width <= 0 || imageCanvas.width <= 0) {
     estSizeEl.textContent = '~0 KB';
     return;
   }
-  var realW = Math.round(cropRect.width / displayScale);
-  var realH = Math.round(cropRect.height / displayScale);
+  var scaleX = originalImage.naturalWidth / imageCanvas.width;
+  var scaleY = originalImage.naturalHeight / imageCanvas.height;
+  var realW = Math.round(cropRect.width * scaleX);
+  var realH = Math.round(cropRect.height * scaleY);
   var pixels = realW * realH;
   var bytes;
   if (outputFormat === 'png') {
@@ -1363,14 +1366,16 @@ function estimateOutputSize() {
 
 // ── Update status bar + sidebar crop dimensions ──
 function updateCropStatus() {
-  if (!originalImage || cropRect.width <= 0) {
+  if (!originalImage || cropRect.width <= 0 || imageCanvas.width <= 0) {
     statusLeft.textContent = 'Ready';
     cropDimsEl.textContent = '0 \u00d7 0 px';
     estSizeEl.textContent = '~0 KB';
     return;
   }
-  var realW = Math.round(cropRect.width / displayScale);
-  var realH = Math.round(cropRect.height / displayScale);
+  var scaleRX = originalImage.naturalWidth / imageCanvas.width;
+  var scaleRY = originalImage.naturalHeight / imageCanvas.height;
+  var realW = Math.round(cropRect.width * scaleRX);
+  var realH = Math.round(cropRect.height * scaleRY);
   var fmtUpper = outputFormat.toUpperCase();
   statusLeft.textContent = 'Crop: ' + realW + ' \u00d7 ' + realH + ' px \u00b7 ' + fmtUpper;
   cropDimsEl.textContent = realW + ' \u00d7 ' + realH + ' px';
@@ -1581,7 +1586,7 @@ overlayCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
 window.addEventListener('touchmove', function(e) {
   if (dragMode) onPointerMove(e);
 }, { passive: false });
-window.addEventListener('touchend', onPointerUp);
+window.addEventListener('touchend', onPointerUp, { passive: false });
 
 // ── Update info bar ──
 function updateInfoBar(file) {
@@ -1610,6 +1615,7 @@ function handleFile(file) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
+      if (originalImage) { originalImage.src = ''; }
       originalImage = img;
       originalFileInfo = {
         name: file.name, size: file.size, type: file.type,
@@ -1657,7 +1663,6 @@ sidebarToggle.addEventListener('click', function() {
 // ── Aspect ratio select ──
 aspectSelect.addEventListener('change', function() {
   var val = aspectSelect.value;
-  // Clear active preset
   activePreset = null;
   var btns = document.querySelectorAll('.preset-btn');
   for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
@@ -1667,6 +1672,7 @@ aspectSelect.addEventListener('change', function() {
   } else {
     aspectRatio = parseFloat(val);
     if (originalImage && imageCanvas.width > 0) {
+      pushUndo();
       applyCropWithRatio(aspectRatio);
       clampCrop();
       drawOverlay();
@@ -1704,6 +1710,7 @@ document.getElementById('preset-grid').addEventListener('click', function(e) {
   if (!matched) aspectSelect.value = 'free';
 
   if (originalImage && imageCanvas.width > 0) {
+    pushUndo();
     applyCropWithRatio(ratio);
     clampCrop();
     drawOverlay();
@@ -1713,6 +1720,7 @@ document.getElementById('preset-grid').addEventListener('click', function(e) {
 // ── Transform: Rotate ──
 function rotateImage(degrees) {
   if (!originalImage) return;
+  pushUndo();
   var c = document.createElement('canvas');
   var ctx = c.getContext('2d');
   var natW = originalImage.naturalWidth;
@@ -1756,11 +1764,13 @@ document.getElementById('btn-rotate-right').addEventListener('click', function()
 // ── Transform: Flip ──
 document.getElementById('btn-flip-h').addEventListener('click', function() {
   if (!originalImage) return;
+  pushUndo();
   flipH = !flipH;
   drawImageToCanvas();
 });
 document.getElementById('btn-flip-v').addEventListener('click', function() {
   if (!originalImage) return;
+  pushUndo();
   flipV = !flipV;
   drawImageToCanvas();
 });
@@ -1896,6 +1906,7 @@ document.getElementById('btn-download-mobile').addEventListener('click', doDownl
 // ── Reset crop button ──
 document.getElementById('btn-reset-crop').addEventListener('click', function() {
   if (!originalImage) return;
+  pushUndo();
   setDefaultCrop();
   clampCrop();
   drawOverlay();

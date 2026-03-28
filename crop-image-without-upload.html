@@ -13,10 +13,12 @@
 <meta property="og:description" content="Crop images without uploading to any server. 100% browser-based, private, free. Your photos never leave your device.">
 <meta property="og:url" content="https://freecropimage.app/crop-image-without-upload.html">
 <meta property="og:site_name" content="freecropimage.app">
+<meta property="og:image" content="https://freecropimage.app/og-image.svg">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Crop Images Without Uploading — Private & Free | freecropimage.app">
 <meta name="twitter:description" content="Crop images without uploading to any server. 100% browser-based, private, free. Your photos never leave your device.">
+<meta name="twitter:image" content="https://freecropimage.app/og-image.svg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,7 +56,7 @@
       "name": "Do most image croppers upload my files?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes, most online image cropping tools upload your files to remote servers for processing. This means your photos pass through third-party infrastructure where they may be stored, logged, or analyzed. Even tools that claim to delete files after processing still transfer your data over the network, creating exposure during transit. freecropimage.app is different — it processes everything in your browser with zero server uploads."
+        "text": "Yes, the majority of online image cropping tools upload your files to remote servers for processing. Your photo is sent over the network, processed on someone else's infrastructure, and the result is sent back. During this process, copies may be stored, logged, or cached. Even services that claim immediate deletion still require the initial upload, exposing your data during transit and at rest on the server, however briefly."
       }
     },
     {
@@ -62,7 +64,7 @@
       "name": "How does browser-based cropping work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Browser-based cropping uses the FileReader API to load your image directly into browser memory, then the Canvas API to render and manipulate the image. When you select a crop region, the canvas extracts those pixels and creates a new image as a Blob URL. The entire process happens in your browser's JavaScript runtime — no network requests carrying image data are made at any point."
+        "text": "Browser-based cropping uses two standard web APIs. The FileReader API loads your selected image file directly into browser memory without any network transfer. The Canvas API then renders that image on an HTML canvas element, giving the application pixel-level control. When you define a crop area, the canvas extracts those pixels, creates a new image Blob in memory, and offers it for download. The entire pipeline runs in your browser's JavaScript engine with zero server involvement."
       }
     },
     {
@@ -70,7 +72,7 @@
       "name": "Can I verify no data is sent?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Open your browser's Developer Tools (F12 or Ctrl+Shift+I), navigate to the Network tab, and clear the log. Then load and crop an image. You will see zero network requests containing image data. This is fully transparent and verifiable by anyone with a web browser."
+        "text": "Yes. Open your browser's Developer Tools by pressing F12, then go to the Network tab. Clear any existing entries, then load and crop an image on freecropimage.app. You will see that no network requests carrying image data are made. This is a transparent, repeatable test anyone can perform to confirm that the tool operates entirely within your browser."
       }
     },
     {
@@ -78,7 +80,7 @@
       "name": "Is it safe for personal photos?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Since freecropimage.app never uploads your images to any server, your personal photos never leave your device. There is no server-side processing, no temporary storage, and no risk of data breaches involving your images. Your photos stay entirely within your browser's local memory."
+        "text": "Yes. Because freecropimage.app processes everything locally in your browser, your personal photos never leave your device. There is no upload, no server-side storage, and no third-party access. Your images exist only in your browser's memory during the editing session and are discarded when you close the tab. This makes it one of the safest ways to crop personal or sensitive photos online."
       }
     },
     {
@@ -86,7 +88,7 @@
       "name": "Does freecropimage.app work offline?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. After your first visit, freecropimage.app caches itself via a service worker. This means you can crop images even without an internet connection. The tool loads from your browser's local cache and processes everything locally, making it fully functional offline."
+        "text": "Yes. After your first visit, freecropimage.app registers a service worker that caches the application locally. This means you can return to the tool and crop images even without an active internet connection. The entire application loads from your browser's local cache, and since image processing was already fully local, offline functionality works identically to online usage."
       }
     }
   ]
@@ -98,7 +100,7 @@
   "@type": "SoftwareApplication",
   "name": "freecropimage.app",
   "url": "https://freecropimage.app",
-  "applicationCategory": "MultimediaApplication",
+  "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Any",
   "offers": {
     "@type": "Offer",
