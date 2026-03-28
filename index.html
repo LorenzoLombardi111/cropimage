@@ -261,6 +261,58 @@ html, body {
 @keyframes toastIn { to { opacity: 1; transform: translateY(0); } }
 @keyframes toastOut { to { opacity: 0; transform: translateY(-10px); } }
 
+/* Editor */
+.editor {
+  display: none;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+.editor.active { display: flex; }
+.drop-zone.hidden { display: none; }
+
+.image-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  min-height: 36px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.image-info-bar .filename {
+  color: var(--text-secondary);
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.image-info-bar .sep { color: var(--border); }
+
+.canvas-area {
+  flex: 1;
+  background: #1a1917;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-wrapper {
+  position: relative;
+  line-height: 0;
+}
+
+.canvas-wrapper canvas {
+  display: block;
+}
+
 @media (max-width: 768px) {
   .drop-zone {
     max-width: 90%;
@@ -292,6 +344,23 @@ html, body {
     <div class="drop-zone-sub">JPG, PNG, WebP, GIF, BMP — crop for free, no upload</div>
     <input type="file" class="file-input" id="file-input" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml">
   </div>
+
+  <div class="editor" id="editor">
+    <div class="image-info-bar" id="image-info-bar">
+      <span class="filename" id="info-filename"></span>
+      <span class="sep">·</span>
+      <span id="info-dimensions"></span>
+      <span class="sep">·</span>
+      <span id="info-filesize"></span>
+      <span class="sep">·</span>
+      <span id="info-format"></span>
+    </div>
+    <div class="canvas-area" id="canvas-area">
+      <div class="canvas-wrapper" id="canvas-wrapper">
+        <canvas id="image-canvas"></canvas>
+      </div>
+    </div>
+  </div>
 </main>
 
 <div class="toast-container" id="toast-container"></div>
@@ -304,16 +373,31 @@ html, body {
 </footer>
 
 <script>
-// Theme
+// ── State ──
+var originalImage = null;   // full-res Image object
+var originalFileInfo = null; // { name, size, type, width, height }
+var displayScale = 1;        // ratio: display px / natural px
+
+// ── DOM refs ──
+var dropZone = document.getElementById('drop-zone');
+var fileInput = document.getElementById('file-input');
+var editor = document.getElementById('editor');
+var btnNewImage = document.getElementById('btn-new-image');
+var canvasArea = document.getElementById('canvas-area');
+var canvasWrapper = document.getElementById('canvas-wrapper');
+var imageCanvas = document.getElementById('image-canvas');
+var statusLeft = document.getElementById('status-left');
+
+// ── Theme ──
 (function() {
-  const toggle = document.getElementById('theme-toggle');
-  const saved = localStorage.getItem('suite_theme');
+  var toggle = document.getElementById('theme-toggle');
+  var saved = localStorage.getItem('suite_theme');
   if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.documentElement.setAttribute('data-theme', 'dark');
     toggle.textContent = '🌙';
   }
   toggle.addEventListener('click', function() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     if (isDark) {
       document.documentElement.removeAttribute('data-theme');
       localStorage.setItem('suite_theme', 'light');
@@ -326,7 +410,7 @@ html, body {
   });
 })();
 
-// Toast
+// ── Toast ──
 function showToast(msg, duration) {
   duration = duration || 3000;
   var container = document.getElementById('toast-container');
@@ -340,48 +424,163 @@ function showToast(msg, duration) {
   }, duration);
 }
 
-// Drop zone
-(function() {
-  var zone = document.getElementById('drop-zone');
-  var input = document.getElementById('file-input');
+// ── Helpers ──
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
 
-  zone.addEventListener('click', function() { input.click(); });
+function getFormatLabel(mimeType) {
+  var map = {
+    'image/jpeg': 'JPG',
+    'image/png': 'PNG',
+    'image/webp': 'WebP',
+    'image/gif': 'GIF',
+    'image/bmp': 'BMP',
+    'image/svg+xml': 'SVG'
+  };
+  return map[mimeType] || mimeType.split('/')[1].toUpperCase();
+}
 
-  zone.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    zone.classList.add('drag-over');
-  });
-  zone.addEventListener('dragleave', function() {
-    zone.classList.remove('drag-over');
-  });
-  zone.addEventListener('drop', function(e) {
-    e.preventDefault();
-    zone.classList.remove('drag-over');
-    var files = e.dataTransfer.files;
-    if (files.length > 0) handleFile(files[0]);
-  });
+// ── Show editor ──
+function showEditor() {
+  dropZone.classList.add('hidden');
+  editor.classList.add('active');
+  btnNewImage.style.display = '';
+}
 
-  input.addEventListener('change', function() {
-    if (input.files.length > 0) handleFile(input.files[0]);
-    input.value = '';
-  });
+// ── Return to drop zone ──
+function resetToDropZone() {
+  editor.classList.remove('active');
+  dropZone.classList.remove('hidden');
+  btnNewImage.style.display = 'none';
+  statusLeft.textContent = 'Ready';
 
-  function handleFile(file) {
-    if (!file.type.startsWith('image/')) {
-      showToast('Only image files are supported.');
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      showToast('File is too large. Maximum size is 50MB.');
-      return;
-    }
-    if (file.size > 30 * 1024 * 1024) {
-      showToast('Large image — may be slow to process', 4000);
-    }
-    // Image loaded — will be handled in next phase
-    showToast('Image loaded! Editor coming soon.');
+  // Release memory
+  if (originalImage) {
+    originalImage.src = '';
+    originalImage = null;
   }
-})();
+  originalFileInfo = null;
+  displayScale = 1;
+
+  var ctx = imageCanvas.getContext('2d');
+  ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+  imageCanvas.width = 0;
+  imageCanvas.height = 0;
+}
+
+// ── Draw image on canvas, fit to available space ──
+function drawImageToCanvas() {
+  if (!originalImage) return;
+
+  var areaW = canvasArea.clientWidth - 40;  // 20px padding each side
+  var areaH = canvasArea.clientHeight - 40;
+  var natW = originalImage.naturalWidth;
+  var natH = originalImage.naturalHeight;
+
+  // Fit image within available area
+  displayScale = Math.min(1, areaW / natW, areaH / natH);
+  var dw = Math.round(natW * displayScale);
+  var dh = Math.round(natH * displayScale);
+
+  imageCanvas.width = dw;
+  imageCanvas.height = dh;
+  canvasWrapper.style.width = dw + 'px';
+  canvasWrapper.style.height = dh + 'px';
+
+  var ctx = imageCanvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(originalImage, 0, 0, dw, dh);
+}
+
+// ── Update info bar ──
+function updateInfoBar(file) {
+  document.getElementById('info-filename').textContent = file.name;
+  document.getElementById('info-dimensions').textContent =
+    originalImage.naturalWidth + ' × ' + originalImage.naturalHeight;
+  document.getElementById('info-filesize').textContent = formatBytes(file.size);
+  document.getElementById('info-format').textContent = getFormatLabel(file.type);
+}
+
+// ── Handle file ──
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) {
+    showToast('Only image files are supported.');
+    return;
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('File is too large. Maximum size is 50MB.');
+    return;
+  }
+  if (file.size > 30 * 1024 * 1024) {
+    showToast('Large image — may be slow to process', 4000);
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      originalImage = img;
+      originalFileInfo = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      };
+
+      showEditor();
+      updateInfoBar(file);
+      drawImageToCanvas();
+
+      // Update status bar
+      statusLeft.textContent =
+        img.naturalWidth + ' × ' + img.naturalHeight +
+        ' · ' + getFormatLabel(file.type) +
+        ' · ' + formatBytes(file.size);
+    };
+    img.onerror = function() {
+      showToast('Could not load this image.');
+    };
+    img.src = e.target.result;
+  };
+  reader.onerror = function() {
+    showToast('Could not load this image.');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Drop zone events ──
+dropZone.addEventListener('click', function() { fileInput.click(); });
+
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', function() {
+  dropZone.classList.remove('drag-over');
+});
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+
+fileInput.addEventListener('change', function() {
+  if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
+  fileInput.value = '';
+});
+
+// ── New Image button ──
+btnNewImage.addEventListener('click', resetToDropZone);
+
+// ── Resize handling ──
+window.addEventListener('resize', function() {
+  if (originalImage) drawImageToCanvas();
+});
 </script>
 
 </body>
