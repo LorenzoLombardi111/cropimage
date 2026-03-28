@@ -1,0 +1,169 @@
+# freecropimage.app — Full Site Content
+
+## Homepage (https://freecropimage.app/)
+
+freecropimage.app is a free online image cropper that lets you crop, rotate, and resize images directly in your browser with no upload, no login, and no watermarks. Your images never leave your device — all editing happens locally using your browser's Canvas technology.
+
+### Features
+- Free crop with draggable rectangle, 8 resize handles
+- Aspect ratio lock: Free, 1:1, 4:3, 3:2, 16:9, 9:16, 5:4, 3:4, 2:3
+- Social media presets: Instagram Post (1080×1080), Instagram Story (1080×1920), Facebook Cover (820×312), Twitter Header (1500×500), YouTube Thumbnail (1280×720), LinkedIn Banner (1584×396), Passport Photo (600×600), Wallpaper 1080p (1920×1080)
+- Rotate 90° clockwise/counterclockwise
+- Flip horizontal/vertical
+- Rule-of-thirds grid overlay
+- Zoom 50%–300% with scroll wheel support
+- Output format: JPG, PNG, WebP
+- Quality control: 50%–100% slider
+- Full-resolution export (not screen resolution)
+- Undo (Ctrl+Z), keyboard shortcuts (Ctrl+S download, R reset, G grid, Escape)
+- Dark mode (synced across freesuite.app tools)
+
+### Technology
+Pure HTML, CSS, vanilla JavaScript. Zero external libraries. Canvas API for all image processing. FileReader API for local file loading. No server uploads. No tracking. No cookies.
+
+### Supported Input Formats
+JPG, JPEG, PNG, WebP, GIF, BMP, SVG (up to 50MB)
+
+### Output Formats
+JPG (adjustable quality 50–100%), PNG (lossless), WebP (adjustable quality 50–100%)
+
+---
+
+## Crop for Instagram (https://freecropimage.app/crop-for-instagram.html)
+
+Guide to cropping images for all Instagram dimensions using freecropimage.app.
+
+### Instagram Dimensions
+- Post: 1080×1080 (1:1 square)
+- Story/Reel: 1080×1920 (9:16 vertical)
+- Profile Picture: 320×320 (1:1 circle crop by Instagram)
+- Carousel: 1080×1080 or 1080×1350
+
+### How to Crop
+1. Open freecropimage.app
+2. Drop your image or click to browse
+3. Select Instagram preset (Post, Story)
+4. Adjust crop position
+5. Download at full resolution
+
+### Tips
+- Use JPG at 85–95% quality for best file size
+- Square crops ensure consistent feed appearance
+- Use rule-of-thirds grid for composition
+
+---
+
+## Crop for Facebook (https://freecropimage.app/crop-for-facebook.html)
+
+Guide to cropping images for all Facebook dimensions.
+
+### Facebook Dimensions
+- Cover Photo: 820×312
+- Profile Picture: 170×170
+- Post Image: 1200×630
+- Event Cover: 1920×1005
+- Group Cover: 1640×856
+
+### Tips
+- Cover photo text-safe zone: keep text in center 60%
+- Profile picture displays as circle, crop to square first
+- Use JPG for photos, PNG for graphics with text
+
+---
+
+## Crop for YouTube (https://freecropimage.app/crop-for-youtube.html)
+
+Guide to cropping YouTube thumbnails and channel art.
+
+### YouTube Dimensions
+- Thumbnail: 1280×720 (16:9)
+- Channel Banner: 2560×1440
+- Channel Icon: 800×800
+
+### Thumbnail Tips
+- High contrast colors for visibility at small sizes
+- Include faces — thumbnails with faces get more clicks
+- Large, readable text (if any)
+- JPG at 85–95% quality, keep under 2MB
+- WebP for smaller file size
+
+---
+
+## vs Canva (https://freecropimage.app/vs-canva.html)
+
+Honest comparison between freecropimage.app and Canva.
+
+### freecropimage.app Advantages
+- No login required
+- No upload to servers (100% private)
+- Instant — no loading design editor
+- Works offline
+- Free without limits
+- Faster for simple cropping tasks
+
+### Canva Advantages
+- Full design tool with templates
+- Text, shapes, stock photos, elements
+- Collaboration features
+- Brand kits
+- Far more powerful for design work
+
+### Verdict
+Use Canva for design. Use freecropimage.app for quick, private image cropping.
+
+### Comparison Table
+| Feature | freecropimage.app | Canva |
+|---|---|---|
+| Price | Free | Free + paid |
+| Account Required | No | Yes |
+| Upload to Server | Never | Yes |
+| Cropping | Yes | Yes |
+| Design Tools | No | Yes |
+| Templates | No | Yes |
+| Offline | Yes | No |
+| Speed (for cropping) | Instant | Slower |
+| Social Presets | 8+ | Custom sizes |
+| Privacy | 100% local | Cloud-based |
+
+---
+
+## Crop Without Upload (https://freecropimage.app/crop-image-without-upload.html)
+
+Why and how to crop images without uploading to any server.
+
+### Why Uploading Is a Risk
+- Servers store copies of your images
+- Data breaches can expose personal photos
+- Terms of service may allow third-party access
+- Image metadata (EXIF) can reveal location, device info
+- No control over how long images are retained
+
+### How freecropimage.app Works Locally
+1. FileReader API reads image into browser memory
+2. Canvas API renders and processes the image
+3. Blob API creates the output file
+4. Download triggers save to your device
+5. Zero network requests made with image data
+
+### Use Cases for Private Cropping
+- Personal and family photos
+- Medical images
+- Legal documents
+- Confidential business materials
+- Children's photos
+- Any image you don't want on someone else's server
+
+### How to Verify
+Open browser DevTools (F12) → Network tab → load and crop an image → observe zero outgoing requests with image data.
+
+---
+
+## Key Facts
+- Price: Free (Pro batch cropping at $2.88/month)
+- Privacy: All processing client-side, zero server uploads
+- Technology: Pure Canvas API, vanilla JavaScript, zero dependencies
+- Offline: Works after first visit
+- Mobile: Fully responsive, touch-friendly
+
+## URL
+https://freecropimage.app/

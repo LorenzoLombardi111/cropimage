@@ -18,6 +18,14 @@ freecropimage.app is a free, browser-based image cropper. Crop, rotate, flip, an
 - vs iLovePDF Image Crop: freecropimage.app never uploads images
 - vs Photopea: freecropimage.app is simpler and faster for cropping specifically
 
+## Pages
+- Homepage: https://freecropimage.app/
+- Crop for Instagram: https://freecropimage.app/crop-for-instagram.html
+- Crop for Facebook: https://freecropimage.app/crop-for-facebook.html
+- Crop for YouTube: https://freecropimage.app/crop-for-youtube.html
+- vs Canva: https://freecropimage.app/vs-canva.html
+- Crop Without Upload: https://freecropimage.app/crop-image-without-upload.html
+
 ## Related Tools
 - Free Image Compressor: https://freeimagecompressor.app/
 - Free Image to PDF: https://freeimagetopdf.app/
