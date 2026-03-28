@@ -398,6 +398,94 @@ html, body {
 .preset-btn:hover { border-color: var(--accent); color: var(--text-primary); }
 .preset-btn.active { border-color: var(--accent); color: var(--accent); }
 
+/* Transform buttons */
+.transform-row {
+  display: flex;
+  gap: 6px;
+}
+
+.transform-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+  padding: 0;
+  line-height: 1;
+}
+.transform-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Grid checkbox */
+.grid-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.grid-toggle-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Zoom section */
+.zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.zoom-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+  cursor: pointer;
+}
+.zoom-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 56px;
+  text-align: right;
+}
+.zoom-fit-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+}
+.zoom-fit-btn:hover { border-color: var(--accent); }
+
+/* Zoom indicator on canvas */
+.zoom-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.45);
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  display: none;
+}
+
 /* Mobile sidebar */
 .sidebar-toggle {
   display: none;
@@ -487,6 +575,7 @@ html, body {
           <canvas id="image-canvas"></canvas>
           <canvas id="overlay-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
         </div>
+        <div class="zoom-indicator" id="zoom-indicator">100%</div>
       </div>
       <button class="sidebar-toggle" id="sidebar-toggle">&#9881; Settings</button>
       <div class="sidebar" id="sidebar">
@@ -520,6 +609,28 @@ html, body {
             <button class="preset-btn" data-ratio="1.7778" data-name="wallpaper">Wallpaper 1080p</button>
           </div>
         </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">TRANSFORM</div>
+          <div class="transform-row">
+            <button class="transform-btn" id="btn-rotate-left" title="Rotate Left">&#8634;</button>
+            <button class="transform-btn" id="btn-rotate-right" title="Rotate Right">&#8635;</button>
+            <button class="transform-btn" id="btn-flip-h" title="Flip Horizontal">&#8596;</button>
+            <button class="transform-btn" id="btn-flip-v" title="Flip Vertical">&#8597;</button>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <label class="grid-toggle-label">
+            <input type="checkbox" id="grid-toggle"> Show grid
+          </label>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">ZOOM</div>
+          <div class="zoom-row">
+            <input type="range" id="zoom-slider" min="50" max="300" value="100" step="5">
+            <span class="zoom-label" id="zoom-label">Fit</span>
+          </div>
+          <button class="zoom-fit-btn" id="zoom-fit-btn">Fit to screen</button>
+        </div>
       </div>
     </div>
   </div>
@@ -542,6 +653,10 @@ var displayScale = 1;
 var cropRect = { x: 0, y: 0, width: 0, height: 0 };
 var aspectRatio = null; // null = free, number = w/h ratio
 var activePreset = null;
+var showGrid = false;
+var zoomLevel = 0; // 0 = fit, otherwise percentage (50-300)
+var flipH = false;
+var flipV = false;
 var isMobile = window.matchMedia('(max-width: 768px)').matches;
 var HANDLE_SIZE = isMobile ? 20 : 8;
 var MIN_CROP = 10;
@@ -566,6 +681,11 @@ var aspectSelect = document.getElementById('aspect-select');
 var cropDimsEl = document.getElementById('crop-dims');
 var sidebarToggle = document.getElementById('sidebar-toggle');
 var sidebar = document.getElementById('sidebar');
+var gridToggle = document.getElementById('grid-toggle');
+var zoomSlider = document.getElementById('zoom-slider');
+var zoomLabel = document.getElementById('zoom-label');
+var zoomIndicator = document.getElementById('zoom-indicator');
+var zoomFitBtn = document.getElementById('zoom-fit-btn');
 
 // ── Theme ──
 (function() {
@@ -639,17 +759,29 @@ function resetToDropZone() {
   overlayCanvas.width = 0; overlayCanvas.height = 0;
 }
 
-// ── Draw image on canvas ──
-function drawImageToCanvas() {
-  if (!originalImage) return;
-
+// ── Compute fit scale ──
+function computeFitScale() {
   var areaW = canvasArea.clientWidth - 40;
   var areaH = canvasArea.clientHeight - 40;
   var natW = originalImage.naturalWidth;
   var natH = originalImage.naturalHeight;
+  return Math.min(1, areaW / natW, areaH / natH);
+}
+
+// ── Draw image on canvas ──
+function drawImageToCanvas() {
+  if (!originalImage) return;
+
+  var natW = originalImage.naturalWidth;
+  var natH = originalImage.naturalHeight;
+  var fitScale = computeFitScale();
 
   var oldScale = displayScale;
-  displayScale = Math.min(1, areaW / natW, areaH / natH);
+  if (zoomLevel === 0) {
+    displayScale = fitScale;
+  } else {
+    displayScale = fitScale * (zoomLevel / 100);
+  }
   var dw = Math.round(natW * displayScale);
   var dh = Math.round(natH * displayScale);
 
@@ -672,7 +804,23 @@ function drawImageToCanvas() {
   var ctx = imageCanvas.getContext('2d');
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
+  ctx.save();
+  // Apply flips
+  if (flipH || flipV) {
+    ctx.translate(flipH ? dw : 0, flipV ? dh : 0);
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+  }
   ctx.drawImage(originalImage, 0, 0, dw, dh);
+  ctx.restore();
+
+  // Update zoom indicator
+  var pct = Math.round((displayScale / fitScale) * 100);
+  if (zoomLevel === 0) {
+    zoomIndicator.style.display = 'none';
+  } else {
+    zoomIndicator.textContent = pct + '%';
+    zoomIndicator.style.display = '';
+  }
 
   drawOverlay();
 }
@@ -751,6 +899,20 @@ function drawOverlay() {
   ctx.strokeStyle = '#C49A2A';
   ctx.lineWidth = 2;
   ctx.strokeRect(cx, cy, cw, ch);
+
+  // Grid overlay (rule of thirds)
+  if (showGrid) {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    for (var gi = 1; gi <= 2; gi++) {
+      var gx = cx + (cw * gi) / 3;
+      var gy = cy + (ch * gi) / 3;
+      ctx.moveTo(gx, cy); ctx.lineTo(gx, cy + ch);
+      ctx.moveTo(cx, gy); ctx.lineTo(cx + cw, gy);
+    }
+    ctx.stroke();
+  }
 
   // Handles
   var hs = HANDLE_SIZE;
@@ -1156,13 +1318,111 @@ document.getElementById('preset-grid').addEventListener('click', function(e) {
   }
 });
 
+// ── Transform: Rotate ──
+function rotateImage(degrees) {
+  if (!originalImage) return;
+  var c = document.createElement('canvas');
+  var ctx = c.getContext('2d');
+  var natW = originalImage.naturalWidth;
+  var natH = originalImage.naturalHeight;
+
+  if (Math.abs(degrees) === 90) {
+    c.width = natH;
+    c.height = natW;
+  } else {
+    c.width = natW;
+    c.height = natH;
+  }
+
+  ctx.translate(c.width / 2, c.height / 2);
+  ctx.rotate(degrees * Math.PI / 180);
+  // Apply current flips
+  if (flipH || flipV) {
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+  }
+  ctx.drawImage(originalImage, -natW / 2, -natH / 2);
+
+  var newImg = new Image();
+  newImg.onload = function() {
+    originalImage = newImg;
+    flipH = false;
+    flipV = false;
+    // Update info bar dimensions
+    document.getElementById('info-dimensions').textContent =
+      newImg.naturalWidth + ' \u00d7 ' + newImg.naturalHeight;
+    drawImageToCanvas();
+    setDefaultCrop();
+    clampCrop();
+    drawOverlay();
+  };
+  newImg.src = c.toDataURL();
+}
+
+document.getElementById('btn-rotate-left').addEventListener('click', function() { rotateImage(-90); });
+document.getElementById('btn-rotate-right').addEventListener('click', function() { rotateImage(90); });
+
+// ── Transform: Flip ──
+document.getElementById('btn-flip-h').addEventListener('click', function() {
+  if (!originalImage) return;
+  flipH = !flipH;
+  drawImageToCanvas();
+});
+document.getElementById('btn-flip-v').addEventListener('click', function() {
+  if (!originalImage) return;
+  flipV = !flipV;
+  drawImageToCanvas();
+});
+
+// ── Grid toggle ──
+gridToggle.addEventListener('change', function() {
+  showGrid = gridToggle.checked;
+  drawOverlay();
+});
+
+// ── Zoom slider ──
+zoomSlider.addEventListener('input', function() {
+  zoomLevel = parseInt(zoomSlider.value);
+  zoomLabel.textContent = zoomLevel + '%';
+  drawImageToCanvas();
+});
+
+// ── Zoom fit button ──
+zoomFitBtn.addEventListener('click', function() {
+  zoomLevel = 0;
+  zoomSlider.value = 100;
+  zoomLabel.textContent = 'Fit';
+  drawImageToCanvas();
+});
+
+// ── Scroll wheel zoom on canvas ──
+canvasArea.addEventListener('wheel', function(e) {
+  if (!originalImage) return;
+  e.preventDefault();
+  var fitScale = computeFitScale();
+  var currentPct = zoomLevel === 0 ? 100 : zoomLevel;
+  var delta = e.deltaY > 0 ? -10 : 10;
+  var newPct = Math.max(50, Math.min(300, currentPct + delta));
+  zoomLevel = newPct;
+  zoomSlider.value = newPct;
+  zoomLabel.textContent = newPct + '%';
+  drawImageToCanvas();
+}, { passive: false });
+
 // ── Reset also resets sidebar ──
 var _origReset = resetToDropZone;
 resetToDropZone = function() {
   _origReset();
   aspectRatio = null;
   activePreset = null;
+  showGrid = false;
+  flipH = false;
+  flipV = false;
+  zoomLevel = 0;
   aspectSelect.value = 'free';
+  gridToggle.checked = false;
+  zoomSlider.value = 100;
+  zoomLabel.textContent = 'Fit';
+  zoomIndicator.style.display = 'none';
   var btns = document.querySelectorAll('.preset-btn');
   for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
   cropDimsEl.textContent = '0 \u00d7 0 px';
