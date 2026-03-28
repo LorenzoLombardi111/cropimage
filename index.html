@@ -471,6 +471,109 @@ html, body {
 }
 .zoom-fit-btn:hover { border-color: var(--accent); }
 
+/* Output format toggles */
+.format-toggles {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.format-btn {
+  flex: 1;
+  padding: 6px 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  background: var(--surface);
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+.format-btn + .format-btn { border-left: 1px solid var(--border); }
+.format-btn.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.format-btn:not(.active):hover { color: var(--text-primary); }
+
+/* Quality row */
+.quality-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.quality-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+  cursor: pointer;
+}
+.quality-row input[type="range"]:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.quality-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 72px;
+  text-align: right;
+}
+
+.est-size {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* Sidebar actions (sticky) */
+.sidebar-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-download {
+  display: block;
+  width: 100%;
+  padding: 12px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.btn-download:hover { background: var(--accent-hover); }
+
+.btn-reset-crop {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.btn-reset-crop:hover { border-color: var(--accent); color: var(--text-primary); }
+
 /* Zoom indicator on canvas */
 .zoom-indicator {
   position: absolute;
@@ -631,6 +734,23 @@ html, body {
           </div>
           <button class="zoom-fit-btn" id="zoom-fit-btn">Fit to screen</button>
         </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">OUTPUT</div>
+          <div class="format-toggles" id="format-toggles">
+            <button class="format-btn active" data-format="jpg">JPG</button>
+            <button class="format-btn" data-format="png">PNG</button>
+            <button class="format-btn" data-format="webp">WebP</button>
+          </div>
+          <div class="quality-row">
+            <input type="range" id="quality-slider" min="50" max="100" value="85" step="1">
+            <span class="quality-label" id="quality-label">Quality: 85%</span>
+          </div>
+          <div class="est-size" id="est-size">~0 KB</div>
+        </div>
+        <div class="sidebar-actions">
+          <button class="btn-download" id="btn-download">Download Cropped Image</button>
+          <button class="btn-reset-crop" id="btn-reset-crop">Reset Crop</button>
+        </div>
       </div>
     </div>
   </div>
@@ -686,6 +806,11 @@ var zoomSlider = document.getElementById('zoom-slider');
 var zoomLabel = document.getElementById('zoom-label');
 var zoomIndicator = document.getElementById('zoom-indicator');
 var zoomFitBtn = document.getElementById('zoom-fit-btn');
+var qualitySlider = document.getElementById('quality-slider');
+var qualityLabel = document.getElementById('quality-label');
+var estSizeEl = document.getElementById('est-size');
+var outputFormat = 'jpg'; // jpg, png, webp
+var outputQuality = 85;
 
 // ── Theme ──
 (function() {
@@ -992,17 +1117,41 @@ function getPos(e) {
   };
 }
 
+// ── Estimate output file size ──
+function estimateOutputSize() {
+  if (!originalImage || cropRect.width <= 0) {
+    estSizeEl.textContent = '~0 KB';
+    return;
+  }
+  var realW = Math.round(cropRect.width / displayScale);
+  var realH = Math.round(cropRect.height / displayScale);
+  var pixels = realW * realH;
+  var bytes;
+  if (outputFormat === 'png') {
+    // PNG: roughly 3-4 bytes per pixel with compression
+    bytes = pixels * 1.5;
+  } else {
+    // JPG/WebP: quality-dependent, rough estimate
+    var qFactor = outputQuality / 100;
+    bytes = pixels * 3 * qFactor * 0.15;
+  }
+  estSizeEl.textContent = '~' + formatBytes(bytes);
+}
+
 // ── Update status bar + sidebar crop dimensions ──
 function updateCropStatus() {
   if (!originalImage || cropRect.width <= 0) {
     statusLeft.textContent = 'Ready';
     cropDimsEl.textContent = '0 \u00d7 0 px';
+    estSizeEl.textContent = '~0 KB';
     return;
   }
   var realW = Math.round(cropRect.width / displayScale);
   var realH = Math.round(cropRect.height / displayScale);
-  statusLeft.textContent = 'Crop: ' + realW + ' \u00d7 ' + realH + ' px';
+  var fmtUpper = outputFormat.toUpperCase();
+  statusLeft.textContent = 'Crop: ' + realW + ' \u00d7 ' + realH + ' px \u00b7 ' + fmtUpper;
   cropDimsEl.textContent = realW + ' \u00d7 ' + realH + ' px';
+  estimateOutputSize();
 }
 
 // ── Mouse / touch handlers ──
@@ -1408,6 +1557,111 @@ canvasArea.addEventListener('wheel', function(e) {
   drawImageToCanvas();
 }, { passive: false });
 
+// ── Format toggles ──
+document.getElementById('format-toggles').addEventListener('click', function(e) {
+  var btn = e.target.closest('.format-btn');
+  if (!btn) return;
+  var btns = document.querySelectorAll('.format-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  btn.classList.add('active');
+  outputFormat = btn.getAttribute('data-format');
+
+  // Disable quality for PNG
+  if (outputFormat === 'png') {
+    qualitySlider.disabled = true;
+    qualityLabel.textContent = 'Lossless';
+  } else {
+    qualitySlider.disabled = false;
+    qualityLabel.textContent = 'Quality: ' + outputQuality + '%';
+  }
+  updateCropStatus();
+});
+
+// ── Quality slider ──
+qualitySlider.addEventListener('input', function() {
+  outputQuality = parseInt(qualitySlider.value);
+  qualityLabel.textContent = 'Quality: ' + outputQuality + '%';
+  estimateOutputSize();
+});
+
+// ── Download ──
+document.getElementById('btn-download').addEventListener('click', function() {
+  if (!originalImage || cropRect.width <= 0) {
+    showToast('Nothing to download. Draw a crop area first.');
+    return;
+  }
+
+  // Map display crop coordinates to full-resolution image coordinates
+  var scaleX = originalImage.naturalWidth / imageCanvas.width;
+  var scaleY = originalImage.naturalHeight / imageCanvas.height;
+
+  var srcX = Math.round(cropRect.x * scaleX);
+  var srcY = Math.round(cropRect.y * scaleY);
+  var srcW = Math.round(cropRect.width * scaleX);
+  var srcH = Math.round(cropRect.height * scaleY);
+
+  // Clamp to image bounds
+  if (srcX < 0) srcX = 0;
+  if (srcY < 0) srcY = 0;
+  if (srcX + srcW > originalImage.naturalWidth) srcW = originalImage.naturalWidth - srcX;
+  if (srcY + srcH > originalImage.naturalHeight) srcH = originalImage.naturalHeight - srcY;
+
+  // Create full-resolution output canvas
+  var outCanvas = document.createElement('canvas');
+  outCanvas.width = srcW;
+  outCanvas.height = srcH;
+  var outCtx = outCanvas.getContext('2d');
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = 'high';
+
+  // Apply flips at full resolution
+  if (flipH || flipV) {
+    outCtx.translate(flipH ? srcW : 0, flipV ? srcH : 0);
+    outCtx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    // When flipped, map source coordinates to mirrored position
+    var drawSrcX = flipH ? (originalImage.naturalWidth - srcX - srcW) : srcX;
+    var drawSrcY = flipV ? (originalImage.naturalHeight - srcY - srcH) : srcY;
+    outCtx.drawImage(originalImage, drawSrcX, drawSrcY, srcW, srcH, 0, 0, srcW, srcH);
+  } else {
+    outCtx.drawImage(originalImage, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+  }
+
+  // Export
+  var mimeType = 'image/jpeg';
+  var ext = 'jpg';
+  if (outputFormat === 'png') { mimeType = 'image/png'; ext = 'png'; }
+  else if (outputFormat === 'webp') { mimeType = 'image/webp'; ext = 'webp'; }
+
+  var quality = outputFormat === 'png' ? undefined : outputQuality / 100;
+
+  outCanvas.toBlob(function(blob) {
+    if (!blob) {
+      showToast('Could not export image.');
+      return;
+    }
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'cropped-image.' + ext;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Clean up
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    outCanvas.width = 0;
+    outCanvas.height = 0;
+    showToast('Image downloaded!');
+  }, mimeType, quality);
+});
+
+// ── Reset crop button ──
+document.getElementById('btn-reset-crop').addEventListener('click', function() {
+  if (!originalImage) return;
+  setDefaultCrop();
+  clampCrop();
+  drawOverlay();
+});
+
 // ── Reset also resets sidebar ──
 var _origReset = resetToDropZone;
 resetToDropZone = function() {
@@ -1418,11 +1672,21 @@ resetToDropZone = function() {
   flipH = false;
   flipV = false;
   zoomLevel = 0;
+  outputFormat = 'jpg';
+  outputQuality = 85;
   aspectSelect.value = 'free';
   gridToggle.checked = false;
   zoomSlider.value = 100;
   zoomLabel.textContent = 'Fit';
   zoomIndicator.style.display = 'none';
+  qualitySlider.value = 85;
+  qualitySlider.disabled = false;
+  qualityLabel.textContent = 'Quality: 85%';
+  estSizeEl.textContent = '~0 KB';
+  var fbtns = document.querySelectorAll('.format-btn');
+  for (var i = 0; i < fbtns.length; i++) {
+    fbtns[i].classList.toggle('active', fbtns[i].getAttribute('data-format') === 'jpg');
+  }
   var btns = document.querySelectorAll('.preset-btn');
   for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
   cropDimsEl.textContent = '0 \u00d7 0 px';
