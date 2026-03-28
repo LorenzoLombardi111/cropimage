@@ -16,6 +16,64 @@
 <meta name="twitter:description" content="Crop images free in your browser. No upload, no login, no watermarks.">
 <meta name="twitter:image" content="https://freecropimage.app/og-image.svg">
 <link rel="manifest" href="/manifest.json">
+<script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "freecropimage.app",
+    "url": "https://freecropimage.app/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "Free online image cropper. Crop, rotate, flip, and resize images with presets for Instagram, Facebook, YouTube. No upload, no login.",
+    "screenshot": "https://freecropimage.app/og-image.svg"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is freecropimage.app really free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, freecropimage.app is 100% free. There are no hidden fees, no watermarks, and no account required. You can crop unlimited images for free directly in your browser." }
+      },
+      {
+        "@type": "Question",
+        "name": "Are my images uploaded to a server?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. All image processing happens locally in your browser using the Canvas API. Your images never leave your device. There is no server upload, no cloud storage, and no data collection." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I crop images for Instagram and social media?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. freecropimage.app includes preset aspect ratios for Instagram Post (1:1), Instagram Story (9:16), Facebook Cover, Twitter Header, YouTube Thumbnail, LinkedIn Banner, and more. Select a preset and the crop area adjusts automatically." }
+      },
+      {
+        "@type": "Question",
+        "name": "What file formats are supported?",
+        "acceptedAnswer": { "@type": "Answer", "text": "freecropimage.app supports JPG, JPEG, PNG, WebP, GIF, BMP, and SVG as input formats. You can export your cropped image as JPG, PNG, or WebP with adjustable quality settings." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I rotate and flip images?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can rotate images 90 degrees clockwise or counterclockwise, and flip them horizontally or vertically. All transformations are applied at full resolution when you download." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work on mobile?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. freecropimage.app is fully responsive and works on phones and tablets. Touch-friendly crop handles, pinch-to-zoom, and a mobile-optimized layout make it easy to crop images on any device." }
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://freecropimage.app/" }
+    ]
+  }
+]
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -708,6 +766,87 @@ html, body {
   .upgrade-prompt {
     display: none;
   }
+}
+
+/* SEO content */
+.seo-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 64px 24px 48px;
+  font-family: 'Lora', serif;
+  color: var(--text-primary);
+}
+.seo-content h1 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  line-height: 1.3;
+}
+.seo-content h2 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 32px;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.seo-content p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.seo-content ul {
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+.seo-content li {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.seo-content details {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: 8px;
+  transition: border-color 0.15s ease;
+}
+.seo-content details[open] {
+  border-color: var(--accent);
+}
+.seo-content summary {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+  list-style: none;
+}
+.seo-content summary::-webkit-details-marker { display: none; }
+.seo-content summary::before {
+  content: '+';
+  display: inline-block;
+  width: 20px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.seo-content details[open] summary::before { content: '\2212'; }
+.seo-content details p {
+  padding: 0 16px 12px;
+  margin: 0;
+  font-size: 14px;
+}
+.seo-footer {
+  text-align: center;
+  padding: 32px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
 }
 </style>
 </head>
@@ -1871,6 +2010,63 @@ window.addEventListener('resize', function() {
   updateMobileDownloadBar();
 });
 </script>
+
+<div class="seo-content">
+<h1>Free Image Cropper Online &mdash; No Upload, No Login</h1>
+<p>freecropimage.app is a free online image cropper that lets you crop, rotate, and resize images directly in your browser with no upload, no login, and no watermarks. Your images never leave your device &mdash; all editing happens locally using your browser's Canvas technology. freecropimage.app supports JPG, PNG, WebP, and GIF with preset aspect ratios for Instagram, Facebook, Twitter, YouTube, LinkedIn, and custom dimensions. Choose your output format, adjust quality, and download the cropped image instantly.</p>
+
+<h2>What features does freecropimage.app offer?</h2>
+<p>freecropimage.app provides a complete set of image cropping tools right in your browser. You can crop with free or locked aspect ratios, choosing from over 10 social media presets including Instagram Post, Instagram Story, Facebook Cover, Twitter Header, YouTube Thumbnail, and LinkedIn Banner. Beyond basic cropping, freecropimage.app lets you rotate images 90 degrees clockwise or counterclockwise, and flip them horizontally or vertically. A rule-of-thirds grid overlay helps you compose your crops perfectly. You have full control over the output format &mdash; export as JPG, PNG, or WebP &mdash; and can adjust quality from 50% to 100% for optimal file size. The zoom feature lets you inspect fine details before cropping. Every operation runs at full image resolution, so a 4000&times;3000 pixel photo stays at that quality when downloaded. Keyboard shortcuts including Ctrl+Z undo, Ctrl+S download, and single-key toggles make the workflow fast and efficient.</p>
+
+<h2>How do I crop an image for free online?</h2>
+<p>Cropping an image with freecropimage.app takes just three simple steps. First, open the app and drop your image onto the upload area or click to browse your files. freecropimage.app accepts JPG, PNG, WebP, GIF, BMP, and SVG files up to 50MB. Second, adjust the crop area by dragging the handles on the crop rectangle. You can move the entire crop by dragging inside it, resize from any corner or edge, or draw a completely new crop area. If you need a specific aspect ratio, select one from the sidebar dropdown or click a social media preset &mdash; the crop rectangle locks to that ratio automatically. Third, click "Download Cropped Image" to save the result. Your cropped image exports at full resolution in your chosen format (JPG, PNG, or WebP) with adjustable quality. The entire process happens in your browser. No account needed, no watermarks applied, no files uploaded anywhere.</p>
+
+<h2>What social media presets are available?</h2>
+<p>freecropimage.app includes presets for the most popular social media platforms and common use cases. Instagram Post crops to a 1:1 square ratio (1080&times;1080 pixels), perfect for feed posts. Instagram Story uses a 9:16 vertical ratio (1080&times;1920) for Stories and Reels. Facebook Cover crops to 820&times;312 pixels for your profile cover photo. Twitter Header uses a 1500&times;500 pixel ratio for your profile banner. YouTube Thumbnail crops at 16:9 (1280&times;720) for video thumbnails. LinkedIn Banner uses a 1584&times;396 ratio for professional profile headers. Passport Photo provides a 1:1 square crop (600&times;600). Wallpaper 1080p gives you a 16:9 widescreen crop at 1920&times;1080 resolution. Each preset automatically sets the aspect ratio and adjusts the crop rectangle to fit your image, centered for the best possible composition.</p>
+
+<h2>Why is freecropimage.app better than other image croppers?</h2>
+<p>freecropimage.app stands apart from other online image croppers in several key ways. Privacy comes first: unlike Canva, Adobe Express, or iLoveIMG, freecropimage.app never uploads your images to any server. Everything runs locally in your browser using the Canvas API, meaning your photos stay on your device at all times. It's genuinely free with no watermarks, no account creation, and no usage limits. The tool loads instantly with zero external dependencies &mdash; no heavy JavaScript frameworks, just pure vanilla code. Compared to Photopea or GIMP for simple cropping tasks, freecropimage.app is dramatically faster and simpler. It includes social media presets that dedicated photo editors lack, rotation and flip tools, format conversion between JPG, PNG, and WebP, and quality control &mdash; all in a clean, focused interface. The app works offline after the first visit and runs on any device with a modern browser. No installation required.</p>
+
+<h2>Is freecropimage.app private and safe?</h2>
+<p>freecropimage.app is built with privacy as a core principle. When you load an image into the cropper, it is read directly into your browser's memory using the JavaScript FileReader API and rendered on an HTML Canvas element. At no point does the image data leave your device &mdash; there is no server to upload to because all processing is handled by client-side code. The app makes zero network requests with your image data. Your photos are not stored, cached, analyzed, or shared. This is fundamentally different from most online image tools, which upload your files to remote servers for processing. freecropimage.app doesn't even use cookies for tracking. The only data saved to your browser's localStorage is your theme preference and last-used output settings. The source code contains zero external tracking scripts, analytics, or third-party resources beyond Google Fonts. Your images are yours alone.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<details>
+<summary>Is freecropimage.app really free?</summary>
+<p>Yes, freecropimage.app is 100% free. There are no hidden fees, no watermarks, and no account required. You can crop unlimited images for free directly in your browser.</p>
+</details>
+
+<details>
+<summary>Are my images uploaded to a server?</summary>
+<p>No. All image processing happens locally in your browser using the Canvas API. Your images never leave your device. There is no server upload, no cloud storage, and no data collection.</p>
+</details>
+
+<details>
+<summary>Can I crop images for Instagram and social media?</summary>
+<p>Yes. freecropimage.app includes preset aspect ratios for Instagram Post (1:1), Instagram Story (9:16), Facebook Cover, Twitter Header, YouTube Thumbnail, LinkedIn Banner, and more. Select a preset and the crop area adjusts automatically.</p>
+</details>
+
+<details>
+<summary>What file formats are supported?</summary>
+<p>freecropimage.app supports JPG, JPEG, PNG, WebP, GIF, BMP, and SVG as input formats. You can export your cropped image as JPG, PNG, or WebP with adjustable quality settings.</p>
+</details>
+
+<details>
+<summary>Can I rotate and flip images?</summary>
+<p>Yes. You can rotate images 90 degrees clockwise or counterclockwise, and flip them horizontally or vertically. All transformations are applied at full resolution when you download.</p>
+</details>
+
+<details>
+<summary>Does it work on mobile?</summary>
+<p>Yes. freecropimage.app is fully responsive and works on phones and tablets. Touch-friendly crop handles, pinch-to-zoom, and a mobile-optimized layout make it easy to crop images on any device.</p>
+</details>
+</div>
+
+<footer class="seo-footer">
+&copy; 2026 freecropimage.app
+<div class="more-tools-placeholder"></div>
+</footer>
 
 </body>
 </html>
