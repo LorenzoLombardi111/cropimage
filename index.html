@@ -294,6 +294,12 @@ html, body {
 }
 .image-info-bar .sep { color: var(--border); }
 
+.editor-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
 .canvas-area {
   flex: 1;
   background: #1a1917;
@@ -302,6 +308,7 @@ html, body {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
 .canvas-wrapper {
@@ -313,10 +320,129 @@ html, body {
   display: block;
 }
 
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-section {
+  margin-bottom: 20px;
+}
+
+.sidebar-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.crop-dimensions {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.sidebar select {
+  width: 100%;
+  padding: 7px 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239e9b96' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.15s ease;
+}
+.sidebar select:hover, .sidebar select:focus {
+  border-color: var(--accent);
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.preset-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.preset-btn.active { border-color: var(--accent); color: var(--accent); }
+
+/* Mobile sidebar */
+.sidebar-toggle {
+  display: none;
+  width: 100%;
+  padding: 10px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: none;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .drop-zone {
     max-width: 90%;
     padding: 48px 24px;
+  }
+  .editor-body {
+    flex-direction: column;
+  }
+  .canvas-area {
+    flex: none;
+    height: 55vh;
+  }
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+  }
+  .sidebar.collapsed {
+    display: none;
+  }
+  .sidebar-toggle {
+    display: block;
+  }
+  .preset-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 </style>
@@ -355,10 +481,45 @@ html, body {
       <span class="sep">·</span>
       <span id="info-format"></span>
     </div>
-    <div class="canvas-area" id="canvas-area">
-      <div class="canvas-wrapper" id="canvas-wrapper">
-        <canvas id="image-canvas"></canvas>
-        <canvas id="overlay-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
+    <div class="editor-body">
+      <div class="canvas-area" id="canvas-area">
+        <div class="canvas-wrapper" id="canvas-wrapper">
+          <canvas id="image-canvas"></canvas>
+          <canvas id="overlay-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebar-toggle">&#9881; Settings</button>
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+          <div class="crop-dimensions" id="crop-dims">0 &#215; 0 px</div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">ASPECT RATIO</div>
+          <select id="aspect-select">
+            <option value="free">Free</option>
+            <option value="1">1:1 (Square)</option>
+            <option value="1.3333">4:3</option>
+            <option value="1.5">3:2</option>
+            <option value="1.7778">16:9</option>
+            <option value="0.5625">9:16</option>
+            <option value="1.25">5:4</option>
+            <option value="0.75">3:4</option>
+            <option value="0.6667">2:3</option>
+          </select>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">PRESETS</div>
+          <div class="preset-grid" id="preset-grid">
+            <button class="preset-btn" data-ratio="1" data-name="ig-post">Instagram Post</button>
+            <button class="preset-btn" data-ratio="0.5625" data-name="ig-story">Instagram Story</button>
+            <button class="preset-btn" data-ratio="2.6282" data-name="fb-cover">Facebook Cover</button>
+            <button class="preset-btn" data-ratio="3" data-name="tw-header">Twitter Header</button>
+            <button class="preset-btn" data-ratio="1.7778" data-name="yt-thumb">YouTube Thumb</button>
+            <button class="preset-btn" data-ratio="4" data-name="li-banner">LinkedIn Banner</button>
+            <button class="preset-btn" data-ratio="1" data-name="passport">Passport Photo</button>
+            <button class="preset-btn" data-ratio="1.7778" data-name="wallpaper">Wallpaper 1080p</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -379,12 +540,14 @@ var originalImage = null;
 var originalFileInfo = null;
 var displayScale = 1;
 var cropRect = { x: 0, y: 0, width: 0, height: 0 };
+var aspectRatio = null; // null = free, number = w/h ratio
+var activePreset = null;
 var isMobile = window.matchMedia('(max-width: 768px)').matches;
 var HANDLE_SIZE = isMobile ? 20 : 8;
 var MIN_CROP = 10;
 
 // Drag state
-var dragMode = null;   // 'move', 'draw', 'nw','n','ne','e','se','s','sw','w'
+var dragMode = null;
 var dragStartX = 0;
 var dragStartY = 0;
 var dragStartCrop = null;
@@ -399,6 +562,10 @@ var canvasWrapper = document.getElementById('canvas-wrapper');
 var imageCanvas = document.getElementById('image-canvas');
 var overlayCanvas = document.getElementById('overlay-canvas');
 var statusLeft = document.getElementById('status-left');
+var aspectSelect = document.getElementById('aspect-select');
+var cropDimsEl = document.getElementById('crop-dims');
+var sidebarToggle = document.getElementById('sidebar-toggle');
+var sidebar = document.getElementById('sidebar');
 
 // ── Theme ──
 (function() {
@@ -510,12 +677,38 @@ function drawImageToCanvas() {
   drawOverlay();
 }
 
-// ── Set default crop (80% centered) ──
+// ── Set default crop (80% centered, respects aspect ratio) ──
 function setDefaultCrop() {
   var w = imageCanvas.width;
   var h = imageCanvas.height;
-  var cw = Math.round(w * 0.8);
-  var ch = Math.round(h * 0.8);
+  if (aspectRatio) {
+    applyCropWithRatio(aspectRatio);
+  } else {
+    var cw = Math.round(w * 0.8);
+    var ch = Math.round(h * 0.8);
+    cropRect.x = Math.round((w - cw) / 2);
+    cropRect.y = Math.round((h - ch) / 2);
+    cropRect.width = cw;
+    cropRect.height = ch;
+  }
+}
+
+// ── Apply crop with a given aspect ratio, centered, max fit within 80% ──
+function applyCropWithRatio(ratio) {
+  var w = imageCanvas.width;
+  var h = imageCanvas.height;
+  var maxW = w * 0.8;
+  var maxH = h * 0.8;
+  var cw, ch;
+  if (maxW / maxH > ratio) {
+    ch = maxH;
+    cw = ch * ratio;
+  } else {
+    cw = maxW;
+    ch = cw / ratio;
+  }
+  cw = Math.round(cw);
+  ch = Math.round(ch);
   cropRect.x = Math.round((w - cw) / 2);
   cropRect.y = Math.round((h - ch) / 2);
   cropRect.width = cw;
@@ -637,15 +830,17 @@ function getPos(e) {
   };
 }
 
-// ── Update status bar with crop dimensions ──
+// ── Update status bar + sidebar crop dimensions ──
 function updateCropStatus() {
   if (!originalImage || cropRect.width <= 0) {
     statusLeft.textContent = 'Ready';
+    cropDimsEl.textContent = '0 \u00d7 0 px';
     return;
   }
   var realW = Math.round(cropRect.width / displayScale);
   var realH = Math.round(cropRect.height / displayScale);
   statusLeft.textContent = 'Crop: ' + realW + ' \u00d7 ' + realH + ' px';
+  cropDimsEl.textContent = realW + ' \u00d7 ' + realH + ' px';
 }
 
 // ── Mouse / touch handlers ──
@@ -699,53 +894,103 @@ function onPointerMove(e) {
 
   } else if (dragMode === 'draw') {
     var x1 = dragStartX, y1 = dragStartY;
-    var x2 = pos.x, y2 = pos.y;
-    // Clamp to canvas
-    x2 = Math.max(0, Math.min(W, x2));
-    y2 = Math.max(0, Math.min(H, y2));
-    cropRect.x = Math.min(x1, x2);
-    cropRect.y = Math.min(y1, y2);
-    cropRect.width = Math.abs(x2 - x1);
-    cropRect.height = Math.abs(y2 - y1);
+    var x2 = Math.max(0, Math.min(W, pos.x));
+    var y2 = Math.max(0, Math.min(H, pos.y));
+    var dw2 = Math.abs(x2 - x1);
+    var dh2 = Math.abs(y2 - y1);
+    if (aspectRatio) {
+      // Lock ratio: use the larger dimension
+      if (dw2 / dh2 > aspectRatio) {
+        dw2 = dh2 * aspectRatio;
+      } else {
+        dh2 = dw2 / aspectRatio;
+      }
+      // Determine direction
+      if (x2 < x1) { cropRect.x = x1 - dw2; } else { cropRect.x = x1; }
+      if (y2 < y1) { cropRect.y = y1 - dh2; } else { cropRect.y = y1; }
+    } else {
+      cropRect.x = Math.min(x1, x2);
+      cropRect.y = Math.min(y1, y2);
+    }
+    cropRect.width = dw2;
+    cropRect.height = dh2;
 
   } else {
     // Resize from handle
     var newX = sc.x, newY = sc.y, newW = sc.width, newH = sc.height;
 
-    if (dragMode.indexOf('w') !== -1) {
-      newX = sc.x + dx;
-      newW = sc.width - dx;
-    }
-    if (dragMode.indexOf('e') !== -1) {
-      newW = sc.width + dx;
-    }
-    if (dragMode === 'n' || dragMode === 'nw' || dragMode === 'ne') {
-      newY = sc.y + dy;
-      newH = sc.height - dy;
-    }
-    if (dragMode === 's' || dragMode === 'sw' || dragMode === 'se') {
-      newH = sc.height + dy;
+    if (aspectRatio) {
+      // Corner handles: scale proportionally from opposite corner
+      // Edge handles: adjust that dimension & compute the other
+      var isCorner = (dragMode === 'nw' || dragMode === 'ne' || dragMode === 'sw' || dragMode === 'se');
+      if (isCorner) {
+        // Use the dominant axis delta
+        var adx = dx, ady = dy;
+        if (dragMode === 'nw') {
+          // Anchor is SE corner
+          newW = sc.width - dx;
+          newH = newW / aspectRatio;
+          newX = sc.x + sc.width - newW;
+          newY = sc.y + sc.height - newH;
+        } else if (dragMode === 'ne') {
+          newW = sc.width + dx;
+          newH = newW / aspectRatio;
+          newY = sc.y + sc.height - newH;
+        } else if (dragMode === 'sw') {
+          newW = sc.width - dx;
+          newH = newW / aspectRatio;
+          newX = sc.x + sc.width - newW;
+        } else { // se
+          newW = sc.width + dx;
+          newH = newW / aspectRatio;
+        }
+      } else {
+        // Edge handles
+        if (dragMode === 'n') {
+          newH = sc.height - dy;
+          newW = newH * aspectRatio;
+          newX = sc.x + (sc.width - newW) / 2;
+          newY = sc.y + sc.height - newH;
+        } else if (dragMode === 's') {
+          newH = sc.height + dy;
+          newW = newH * aspectRatio;
+          newX = sc.x + (sc.width - newW) / 2;
+        } else if (dragMode === 'w') {
+          newW = sc.width - dx;
+          newH = newW / aspectRatio;
+          newX = sc.x + sc.width - newW;
+          newY = sc.y + (sc.height - newH) / 2;
+        } else { // e
+          newW = sc.width + dx;
+          newH = newW / aspectRatio;
+          newY = sc.y + (sc.height - newH) / 2;
+        }
+      }
+    } else {
+      // Free resize (no ratio lock)
+      if (dragMode.indexOf('w') !== -1) { newX = sc.x + dx; newW = sc.width - dx; }
+      if (dragMode.indexOf('e') !== -1) { newW = sc.width + dx; }
+      if (dragMode === 'n' || dragMode === 'nw' || dragMode === 'ne') { newY = sc.y + dy; newH = sc.height - dy; }
+      if (dragMode === 's' || dragMode === 'sw' || dragMode === 'se') { newH = sc.height + dy; }
     }
 
-    // If width flipped, constrain to minimum
+    // Enforce minimums
     if (newW < MIN_CROP) {
-      if (dragMode.indexOf('w') !== -1) {
-        newX = sc.x + sc.width - MIN_CROP;
-      }
       newW = MIN_CROP;
+      if (aspectRatio) newH = newW / aspectRatio;
+      if (dragMode.indexOf('w') !== -1) newX = sc.x + sc.width - newW;
     }
     if (newH < MIN_CROP) {
-      if (dragMode === 'n' || dragMode === 'nw' || dragMode === 'ne') {
-        newY = sc.y + sc.height - MIN_CROP;
-      }
       newH = MIN_CROP;
+      if (aspectRatio) newW = newH * aspectRatio;
+      if (dragMode === 'n' || dragMode === 'nw' || dragMode === 'ne') newY = sc.y + sc.height - newH;
     }
 
     // Clamp to bounds
-    if (newX < 0) { newW += newX; newX = 0; }
-    if (newY < 0) { newH += newY; newY = 0; }
-    if (newX + newW > W) newW = W - newX;
-    if (newY + newH > H) newH = H - newY;
+    if (newX < 0) { if (!aspectRatio) { newW += newX; } newX = 0; }
+    if (newY < 0) { if (!aspectRatio) { newH += newY; } newY = 0; }
+    if (newX + newW > W) { if (!aspectRatio) { newW = W - newX; } else { newX = W - newW; } }
+    if (newY + newH > H) { if (!aspectRatio) { newH = H - newY; } else { newY = H - newH; } }
     if (newW < MIN_CROP) newW = MIN_CROP;
     if (newH < MIN_CROP) newH = MIN_CROP;
 
@@ -847,6 +1092,82 @@ fileInput.addEventListener('change', function() {
 });
 
 // ── New Image button ──
+btnNewImage.addEventListener('click', resetToDropZone);
+
+// ── Sidebar toggle (mobile) ──
+sidebarToggle.addEventListener('click', function() {
+  sidebar.classList.toggle('collapsed');
+  sidebarToggle.textContent = sidebar.classList.contains('collapsed') ? '\u2699 Settings' : '\u2699 Hide Settings';
+});
+
+// ── Aspect ratio select ──
+aspectSelect.addEventListener('change', function() {
+  var val = aspectSelect.value;
+  // Clear active preset
+  activePreset = null;
+  var btns = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+
+  if (val === 'free') {
+    aspectRatio = null;
+  } else {
+    aspectRatio = parseFloat(val);
+    if (originalImage && imageCanvas.width > 0) {
+      applyCropWithRatio(aspectRatio);
+      clampCrop();
+      drawOverlay();
+    }
+  }
+});
+
+// ── Preset buttons ──
+document.getElementById('preset-grid').addEventListener('click', function(e) {
+  var btn = e.target.closest('.preset-btn');
+  if (!btn) return;
+
+  var ratio = parseFloat(btn.getAttribute('data-ratio'));
+  var name = btn.getAttribute('data-name');
+
+  // Update active state
+  var btns = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  btn.classList.add('active');
+  activePreset = name;
+
+  // Set aspect ratio
+  aspectRatio = ratio;
+
+  // Sync select dropdown to closest match
+  var options = aspectSelect.options;
+  var matched = false;
+  for (var j = 0; j < options.length; j++) {
+    if (options[j].value !== 'free' && Math.abs(parseFloat(options[j].value) - ratio) < 0.01) {
+      aspectSelect.value = options[j].value;
+      matched = true;
+      break;
+    }
+  }
+  if (!matched) aspectSelect.value = 'free';
+
+  if (originalImage && imageCanvas.width > 0) {
+    applyCropWithRatio(ratio);
+    clampCrop();
+    drawOverlay();
+  }
+});
+
+// ── Reset also resets sidebar ──
+var _origReset = resetToDropZone;
+resetToDropZone = function() {
+  _origReset();
+  aspectRatio = null;
+  activePreset = null;
+  aspectSelect.value = 'free';
+  var btns = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  cropDimsEl.textContent = '0 \u00d7 0 px';
+};
+btnNewImage.removeEventListener('click', _origReset);
 btnNewImage.addEventListener('click', resetToDropZone);
 
 // ── Resize handling ──
