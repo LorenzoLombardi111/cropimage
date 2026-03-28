@@ -358,6 +358,7 @@ html, body {
     <div class="canvas-area" id="canvas-area">
       <div class="canvas-wrapper" id="canvas-wrapper">
         <canvas id="image-canvas"></canvas>
+        <canvas id="overlay-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
       </div>
     </div>
   </div>
@@ -374,9 +375,19 @@ html, body {
 
 <script>
 // ── State ──
-var originalImage = null;   // full-res Image object
-var originalFileInfo = null; // { name, size, type, width, height }
-var displayScale = 1;        // ratio: display px / natural px
+var originalImage = null;
+var originalFileInfo = null;
+var displayScale = 1;
+var cropRect = { x: 0, y: 0, width: 0, height: 0 };
+var isMobile = window.matchMedia('(max-width: 768px)').matches;
+var HANDLE_SIZE = isMobile ? 20 : 8;
+var MIN_CROP = 10;
+
+// Drag state
+var dragMode = null;   // 'move', 'draw', 'nw','n','ne','e','se','s','sw','w'
+var dragStartX = 0;
+var dragStartY = 0;
+var dragStartCrop = null;
 
 // ── DOM refs ──
 var dropZone = document.getElementById('drop-zone');
@@ -386,6 +397,7 @@ var btnNewImage = document.getElementById('btn-new-image');
 var canvasArea = document.getElementById('canvas-area');
 var canvasWrapper = document.getElementById('canvas-wrapper');
 var imageCanvas = document.getElementById('image-canvas');
+var overlayCanvas = document.getElementById('overlay-canvas');
 var statusLeft = document.getElementById('status-left');
 
 // ── Theme ──
@@ -433,12 +445,8 @@ function formatBytes(bytes) {
 
 function getFormatLabel(mimeType) {
   var map = {
-    'image/jpeg': 'JPG',
-    'image/png': 'PNG',
-    'image/webp': 'WebP',
-    'image/gif': 'GIF',
-    'image/bmp': 'BMP',
-    'image/svg+xml': 'SVG'
+    'image/jpeg': 'JPG', 'image/png': 'PNG', 'image/webp': 'WebP',
+    'image/gif': 'GIF', 'image/bmp': 'BMP', 'image/svg+xml': 'SVG'
   };
   return map[mimeType] || mimeType.split('/')[1].toUpperCase();
 }
@@ -456,37 +464,41 @@ function resetToDropZone() {
   dropZone.classList.remove('hidden');
   btnNewImage.style.display = 'none';
   statusLeft.textContent = 'Ready';
-
-  // Release memory
-  if (originalImage) {
-    originalImage.src = '';
-    originalImage = null;
-  }
+  if (originalImage) { originalImage.src = ''; originalImage = null; }
   originalFileInfo = null;
   displayScale = 1;
-
-  var ctx = imageCanvas.getContext('2d');
-  ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
-  imageCanvas.width = 0;
-  imageCanvas.height = 0;
+  cropRect = { x: 0, y: 0, width: 0, height: 0 };
+  imageCanvas.width = 0; imageCanvas.height = 0;
+  overlayCanvas.width = 0; overlayCanvas.height = 0;
 }
 
-// ── Draw image on canvas, fit to available space ──
+// ── Draw image on canvas ──
 function drawImageToCanvas() {
   if (!originalImage) return;
 
-  var areaW = canvasArea.clientWidth - 40;  // 20px padding each side
+  var areaW = canvasArea.clientWidth - 40;
   var areaH = canvasArea.clientHeight - 40;
   var natW = originalImage.naturalWidth;
   var natH = originalImage.naturalHeight;
 
-  // Fit image within available area
+  var oldScale = displayScale;
   displayScale = Math.min(1, areaW / natW, areaH / natH);
   var dw = Math.round(natW * displayScale);
   var dh = Math.round(natH * displayScale);
 
+  // Rescale crop rect if canvas size changed
+  if (oldScale > 0 && oldScale !== displayScale && cropRect.width > 0) {
+    var ratio = displayScale / oldScale;
+    cropRect.x = Math.round(cropRect.x * ratio);
+    cropRect.y = Math.round(cropRect.y * ratio);
+    cropRect.width = Math.round(cropRect.width * ratio);
+    cropRect.height = Math.round(cropRect.height * ratio);
+  }
+
   imageCanvas.width = dw;
   imageCanvas.height = dh;
+  overlayCanvas.width = dw;
+  overlayCanvas.height = dh;
   canvasWrapper.style.width = dw + 'px';
   canvasWrapper.style.height = dh + 'px';
 
@@ -494,13 +506,289 @@ function drawImageToCanvas() {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(originalImage, 0, 0, dw, dh);
+
+  drawOverlay();
 }
+
+// ── Set default crop (80% centered) ──
+function setDefaultCrop() {
+  var w = imageCanvas.width;
+  var h = imageCanvas.height;
+  var cw = Math.round(w * 0.8);
+  var ch = Math.round(h * 0.8);
+  cropRect.x = Math.round((w - cw) / 2);
+  cropRect.y = Math.round((h - ch) / 2);
+  cropRect.width = cw;
+  cropRect.height = ch;
+}
+
+// ── Clamp crop to image bounds ──
+function clampCrop() {
+  var w = imageCanvas.width;
+  var h = imageCanvas.height;
+  if (cropRect.width < MIN_CROP) cropRect.width = MIN_CROP;
+  if (cropRect.height < MIN_CROP) cropRect.height = MIN_CROP;
+  if (cropRect.width > w) cropRect.width = w;
+  if (cropRect.height > h) cropRect.height = h;
+  if (cropRect.x < 0) cropRect.x = 0;
+  if (cropRect.y < 0) cropRect.y = 0;
+  if (cropRect.x + cropRect.width > w) cropRect.x = w - cropRect.width;
+  if (cropRect.y + cropRect.height > h) cropRect.y = h - cropRect.height;
+}
+
+// ── Draw overlay ──
+function drawOverlay() {
+  var ctx = overlayCanvas.getContext('2d');
+  var w = overlayCanvas.width;
+  var h = overlayCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  if (cropRect.width <= 0 || cropRect.height <= 0) return;
+
+  var cx = cropRect.x, cy = cropRect.y, cw = cropRect.width, ch = cropRect.height;
+
+  // Dim outside crop
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(0, 0, w, cy);                          // top
+  ctx.fillRect(0, cy, cx, ch);                         // left
+  ctx.fillRect(cx + cw, cy, w - cx - cw, ch);         // right
+  ctx.fillRect(0, cy + ch, w, h - cy - ch);           // bottom
+
+  // Crop border
+  ctx.strokeStyle = '#C49A2A';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx, cy, cw, ch);
+
+  // Handles
+  var hs = HANDLE_SIZE;
+  var hh = hs / 2;
+  var handles = getHandlePositions();
+  for (var i = 0; i < handles.length; i++) {
+    var hp = handles[i];
+    ctx.fillStyle = '#C49A2A';
+    ctx.fillRect(hp.x - hh, hp.y - hh, hs, hs);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(hp.x - hh, hp.y - hh, hs, hs);
+  }
+
+  updateCropStatus();
+}
+
+// ── Handle positions ──
+function getHandlePositions() {
+  var cx = cropRect.x, cy = cropRect.y, cw = cropRect.width, ch = cropRect.height;
+  return [
+    { id: 'nw', x: cx,          y: cy },
+    { id: 'n',  x: cx + cw / 2, y: cy },
+    { id: 'ne', x: cx + cw,     y: cy },
+    { id: 'e',  x: cx + cw,     y: cy + ch / 2 },
+    { id: 'se', x: cx + cw,     y: cy + ch },
+    { id: 's',  x: cx + cw / 2, y: cy + ch },
+    { id: 'sw', x: cx,          y: cy + ch },
+    { id: 'w',  x: cx,          y: cy + ch / 2 }
+  ];
+}
+
+// ── Hit test: which handle or region is under (mx, my)? ──
+function hitTest(mx, my) {
+  var hs = HANDLE_SIZE + 4; // slightly larger hit area
+  var hh = hs / 2;
+  var handles = getHandlePositions();
+  for (var i = 0; i < handles.length; i++) {
+    var hp = handles[i];
+    if (mx >= hp.x - hh && mx <= hp.x + hh && my >= hp.y - hh && my <= hp.y + hh) {
+      return hp.id;
+    }
+  }
+  // Inside crop?
+  if (mx >= cropRect.x && mx <= cropRect.x + cropRect.width &&
+      my >= cropRect.y && my <= cropRect.y + cropRect.height) {
+    return 'move';
+  }
+  // Outside crop on image = draw new
+  return 'draw';
+}
+
+// ── Cursor for handle ──
+var cursorMap = {
+  nw: 'nw-resize', n: 'n-resize', ne: 'ne-resize', e: 'e-resize',
+  se: 'se-resize', s: 's-resize', sw: 'sw-resize', w: 'w-resize',
+  move: 'move', draw: 'crosshair'
+};
+
+// ── Get mouse/touch position relative to overlay canvas ──
+function getPos(e) {
+  var rect = overlayCanvas.getBoundingClientRect();
+  var clientX, clientY;
+  if (e.touches && e.touches.length > 0) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else if (e.changedTouches && e.changedTouches.length > 0) {
+    clientX = e.changedTouches[0].clientX;
+    clientY = e.changedTouches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top
+  };
+}
+
+// ── Update status bar with crop dimensions ──
+function updateCropStatus() {
+  if (!originalImage || cropRect.width <= 0) {
+    statusLeft.textContent = 'Ready';
+    return;
+  }
+  var realW = Math.round(cropRect.width / displayScale);
+  var realH = Math.round(cropRect.height / displayScale);
+  statusLeft.textContent = 'Crop: ' + realW + ' \u00d7 ' + realH + ' px';
+}
+
+// ── Mouse / touch handlers ──
+function onPointerDown(e) {
+  if (!originalImage) return;
+  e.preventDefault();
+  var pos = getPos(e);
+  var hit = hitTest(pos.x, pos.y);
+
+  dragMode = hit;
+  dragStartX = pos.x;
+  dragStartY = pos.y;
+  dragStartCrop = { x: cropRect.x, y: cropRect.y, width: cropRect.width, height: cropRect.height };
+
+  if (hit === 'draw') {
+    cropRect.x = pos.x;
+    cropRect.y = pos.y;
+    cropRect.width = 0;
+    cropRect.height = 0;
+  }
+}
+
+function onPointerMove(e) {
+  if (!originalImage) return;
+  var pos = getPos(e);
+
+  if (!dragMode) {
+    // Just update cursor
+    var hit = hitTest(pos.x, pos.y);
+    overlayCanvas.style.cursor = cursorMap[hit] || 'crosshair';
+    return;
+  }
+
+  e.preventDefault();
+  var dx = pos.x - dragStartX;
+  var dy = pos.y - dragStartY;
+  var sc = dragStartCrop;
+  var W = imageCanvas.width;
+  var H = imageCanvas.height;
+
+  if (dragMode === 'move') {
+    cropRect.x = sc.x + dx;
+    cropRect.y = sc.y + dy;
+    cropRect.width = sc.width;
+    cropRect.height = sc.height;
+    // Keep in bounds
+    if (cropRect.x < 0) cropRect.x = 0;
+    if (cropRect.y < 0) cropRect.y = 0;
+    if (cropRect.x + cropRect.width > W) cropRect.x = W - cropRect.width;
+    if (cropRect.y + cropRect.height > H) cropRect.y = H - cropRect.height;
+
+  } else if (dragMode === 'draw') {
+    var x1 = dragStartX, y1 = dragStartY;
+    var x2 = pos.x, y2 = pos.y;
+    // Clamp to canvas
+    x2 = Math.max(0, Math.min(W, x2));
+    y2 = Math.max(0, Math.min(H, y2));
+    cropRect.x = Math.min(x1, x2);
+    cropRect.y = Math.min(y1, y2);
+    cropRect.width = Math.abs(x2 - x1);
+    cropRect.height = Math.abs(y2 - y1);
+
+  } else {
+    // Resize from handle
+    var newX = sc.x, newY = sc.y, newW = sc.width, newH = sc.height;
+
+    if (dragMode.indexOf('w') !== -1) {
+      newX = sc.x + dx;
+      newW = sc.width - dx;
+    }
+    if (dragMode.indexOf('e') !== -1) {
+      newW = sc.width + dx;
+    }
+    if (dragMode === 'n' || dragMode === 'nw' || dragMode === 'ne') {
+      newY = sc.y + dy;
+      newH = sc.height - dy;
+    }
+    if (dragMode === 's' || dragMode === 'sw' || dragMode === 'se') {
+      newH = sc.height + dy;
+    }
+
+    // If width flipped, constrain to minimum
+    if (newW < MIN_CROP) {
+      if (dragMode.indexOf('w') !== -1) {
+        newX = sc.x + sc.width - MIN_CROP;
+      }
+      newW = MIN_CROP;
+    }
+    if (newH < MIN_CROP) {
+      if (dragMode === 'n' || dragMode === 'nw' || dragMode === 'ne') {
+        newY = sc.y + sc.height - MIN_CROP;
+      }
+      newH = MIN_CROP;
+    }
+
+    // Clamp to bounds
+    if (newX < 0) { newW += newX; newX = 0; }
+    if (newY < 0) { newH += newY; newY = 0; }
+    if (newX + newW > W) newW = W - newX;
+    if (newY + newH > H) newH = H - newY;
+    if (newW < MIN_CROP) newW = MIN_CROP;
+    if (newH < MIN_CROP) newH = MIN_CROP;
+
+    cropRect.x = newX;
+    cropRect.y = newY;
+    cropRect.width = newW;
+    cropRect.height = newH;
+  }
+
+  drawOverlay();
+}
+
+function onPointerUp(e) {
+  if (!dragMode) return;
+  // Enforce minimum after draw
+  if (cropRect.width < MIN_CROP || cropRect.height < MIN_CROP) {
+    if (dragMode === 'draw') {
+      // Too small, reset to default
+      setDefaultCrop();
+    }
+  }
+  clampCrop();
+  dragMode = null;
+  drawOverlay();
+}
+
+// Mouse events
+overlayCanvas.addEventListener('mousedown', onPointerDown);
+window.addEventListener('mousemove', onPointerMove);
+window.addEventListener('mouseup', onPointerUp);
+
+// Touch events
+overlayCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
+window.addEventListener('touchmove', function(e) {
+  if (dragMode) onPointerMove(e);
+}, { passive: false });
+window.addEventListener('touchend', onPointerUp);
 
 // ── Update info bar ──
 function updateInfoBar(file) {
   document.getElementById('info-filename').textContent = file.name;
   document.getElementById('info-dimensions').textContent =
-    originalImage.naturalWidth + ' × ' + originalImage.naturalHeight;
+    originalImage.naturalWidth + ' \u00d7 ' + originalImage.naturalHeight;
   document.getElementById('info-filesize').textContent = formatBytes(file.size);
   document.getElementById('info-format').textContent = getFormatLabel(file.type);
 }
@@ -516,7 +804,7 @@ function handleFile(file) {
     return;
   }
   if (file.size > 30 * 1024 * 1024) {
-    showToast('Large image — may be slow to process', 4000);
+    showToast('Large image \u2014 may be slow to process', 4000);
   }
 
   var reader = new FileReader();
@@ -525,50 +813,34 @@ function handleFile(file) {
     img.onload = function() {
       originalImage = img;
       originalFileInfo = {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        width: img.naturalWidth,
-        height: img.naturalHeight
+        name: file.name, size: file.size, type: file.type,
+        width: img.naturalWidth, height: img.naturalHeight
       };
 
       showEditor();
       updateInfoBar(file);
       drawImageToCanvas();
-
-      // Update status bar
-      statusLeft.textContent =
-        img.naturalWidth + ' × ' + img.naturalHeight +
-        ' · ' + getFormatLabel(file.type) +
-        ' · ' + formatBytes(file.size);
+      setDefaultCrop();
+      clampCrop();
+      drawOverlay();
     };
-    img.onerror = function() {
-      showToast('Could not load this image.');
-    };
+    img.onerror = function() { showToast('Could not load this image.'); };
     img.src = e.target.result;
   };
-  reader.onerror = function() {
-    showToast('Could not load this image.');
-  };
+  reader.onerror = function() { showToast('Could not load this image.'); };
   reader.readAsDataURL(file);
 }
 
 // ── Drop zone events ──
 dropZone.addEventListener('click', function() { fileInput.click(); });
-
 dropZone.addEventListener('dragover', function(e) {
-  e.preventDefault();
-  dropZone.classList.add('drag-over');
+  e.preventDefault(); dropZone.classList.add('drag-over');
 });
-dropZone.addEventListener('dragleave', function() {
-  dropZone.classList.remove('drag-over');
-});
+dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('drag-over'); });
 dropZone.addEventListener('drop', function(e) {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
+  e.preventDefault(); dropZone.classList.remove('drag-over');
   if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
 });
-
 fileInput.addEventListener('change', function() {
   if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
   fileInput.value = '';
@@ -579,6 +851,8 @@ btnNewImage.addEventListener('click', resetToDropZone);
 
 // ── Resize handling ──
 window.addEventListener('resize', function() {
+  isMobile = window.matchMedia('(max-width: 768px)').matches;
+  HANDLE_SIZE = isMobile ? 20 : 8;
   if (originalImage) drawImageToCanvas();
 });
 </script>
