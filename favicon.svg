@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#faf9f6"/>
+  <!-- Crop frame corners in accent gold -->
+  <g stroke="#C49A2A" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Top-left corner -->
+    <path d="M80 200 L80 80 L200 80"/>
+    <!-- Top-right corner -->
+    <path d="M312 80 L432 80 L432 200"/>
+    <!-- Bottom-right corner -->
+    <path d="M432 312 L432 432 L312 432"/>
+    <!-- Bottom-left corner -->
+    <path d="M200 432 L80 432 L80 312"/>
+  </g>
+  <!-- Small image icon in center -->
+  <g transform="translate(156,156)" stroke="#C49A2A" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="0" y="0" width="200" height="200" rx="20" fill="#C49A2A" fill-opacity="0.08"/>
+    <circle cx="70" cy="70" r="24" fill="#C49A2A" fill-opacity="0.25" stroke="none"/>
+    <path d="M0 160 L60 100 L100 140 L140 80 L200 160" stroke="#C49A2A" stroke-width="14" fill="none"/>
+  </g>
+</svg>
